@@ -133,10 +133,82 @@ const configureProtocol = async (web5, did) => {
 // app.use('/api/', routes);
 
 // app.use(errorHandler)
+
+app.post('/create', async (req, res, next) => {
+  const publishTicketProtocol = defineNewProtocol();
+  try {
+    const {
+      departureState,
+      arrivalState,
+    } = req.body;
+    const { record } = await web5.dwn.records.create({
+      data: {
+        departureState,
+        arrivalState,
+      },
+      message: {
+        protocol: publishTicketProtocol.protocol,
+        protocolPath: 'publishedTickets',
+        dataFormat: 'application/json',
+        schema: publishTicketProtocol.types.publishedTickets.schema,
+        published: true,
+      },
+    });
+
+    let readResult = await record.data.json();
+    res.status(200).json({
+      success: true,
+      data: readResult,
+    });
+  } catch (error) {
+    return next(new ErrorResponse("Couldn't write record: " + error, 400));
+  }
+});
+
+
+app.get('/', async (req, res, next) => {
+  try {
+    const response = await web5.dwn.records.query({
+      from: did,
+      message: {
+        filter: {
+          protocol: 'https://airrove/test',
+          protocolPath: "publishedTickets"
+          //   schema: 'https://schema.org/travel-tickets',
+        },
+      },
+    });
+
+    let userTickets;
+    if (response.status.code === 200) {
+      userTickets = await Promise.all(
+        response.records.map(async (record) => {
+          const data = await record.data.json();
+          if (data) {
+            return {
+              ...data,
+              recordId: record.id,
+              did,
+            };
+          }
+        })
+      );
+    }
+    res.status(201).json({
+      success: true,
+      userTickets,
+    });
+  } catch (error) {
+    console.log(error);
+    // return next(new ErrorResponse('Error occurred ' + error, 400));
+  }
+});
+
 const PORT = 5000;
 const server = app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
+
 
 //Handle unhandled rejections
 process.on('unhandledRejection', (err, promise) => {
