@@ -4,7 +4,7 @@
 // // import errorHandler from './utils/error.js';
 
 // /*
-// Needs globalThis.crypto polyfill. 
+// Needs globalThis.crypto polyfill.
 // This is *not* the crypto you're thinking of.
 // It's the original crypto...CRYPTOGRAPHY.
 // */
@@ -29,8 +29,6 @@
 
 // app.use(bodyParser.urlencoded({ extended: false }));
 // app.use(bodyParser.json());
-
-
 
 // //  console.log('this is in query local protocol')
 // const queryLocalProtocol = async (web5) => {
@@ -129,7 +127,6 @@
 
 // // import routes from './routes/ticket.router.js';
 
-
 // // app.use('/api/', routes);
 
 // // app.use(errorHandler)
@@ -164,7 +161,6 @@
 //     return next(new ErrorResponse("Couldn't write record: " + error, 400));
 //   }
 // });
-
 
 // app.get('/all', async (req, res, next) => {
 //   try {
@@ -209,7 +205,6 @@
 //   console.log(`Server running on port ${PORT}`);
 // });
 
-
 // //Handle unhandled rejections
 // process.on('unhandledRejection', (err, promise) => {
 //   console.log(`Error: ${err.message}`);
@@ -218,7 +213,6 @@
 
 // const { web5, did } = await Web5.connect({ sync: '5s' })
 // await configureProtocol(web5, did);
-
 
 import express from 'express';
 import bodyParser from 'body-parser';
@@ -245,14 +239,14 @@ if (!globalThis.crypto) globalThis.crypto = webcrypto;
 // console.log(publicKey);
 
 const app = express();
+// import server from 'http';
+// server.createServer(app);
 
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: false }));
 
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
-
-
 
 //  console.log('this is in query local protocol')
 const queryLocalProtocol = async (web5) => {
@@ -351,33 +345,27 @@ const configureProtocol = async (web5, did) => {
 
 // import routes from './routes/ticket.router.js';
 
-
 // app.use('/api/', routes);
 
 // app.use(errorHandler)
 
-let myweb5, mydid
-app.get('/', async(req, res) => {
-  const { web5, did } = await Web5.connect({ sync: '5s' })
+let myweb5, mydid;
+app.get('/', async (req, res) => {
+  const { web5, did } = await Web5.connect({ sync: '5s' });
   myweb5 = web5;
-  mydid = did
+  mydid = did;
   await configureProtocol(myweb5, mydid);
-  
-  if(myweb5 && mydid){
-    res.status(200).json({
-      success: true,
-      data: mydid
-    })
-  }
-})
+
+  res.status(200).json({
+    success: true,
+    data: mydid,
+  });
+});
 
 app.post('/create', async (req, res, next) => {
   const publishTicketProtocol = defineNewProtocol();
   try {
-    const {
-      departureState,
-      arrivalState,
-    } = req.body;
+    const { departureState, arrivalState } = req.body;
     const { record } = await myweb5.dwn.records.create({
       data: {
         departureState,
@@ -402,7 +390,6 @@ app.post('/create', async (req, res, next) => {
   }
 });
 
-
 app.get('/all', async (req, res, next) => {
   try {
     const response = await myweb5.dwn.records.query({
@@ -410,7 +397,7 @@ app.get('/all', async (req, res, next) => {
       message: {
         filter: {
           protocol: 'https://airrove/test',
-          protocolPath: "publishedTickets"
+          protocolPath: 'publishedTickets',
           //   schema: 'https://schema.org/travel-tickets',
         },
       },
@@ -446,17 +433,8 @@ const server = app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
 
-
 //Handle unhandled rejections
 process.on('unhandledRejection', (err, promise) => {
   console.log(`Error: ${err.message}`);
   server.close(() => process.exit(1));
 });
-
-
-
-
-
-
-
-
